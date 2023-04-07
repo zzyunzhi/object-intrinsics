@@ -21,6 +21,10 @@ Install other dependencies manually:
 ```
 pip install omegaconf tensorboard scipy opencv-python matplotlib imageio[ffmpeg]
 ```
+Finally, run
+```
+pip install -e .
+```
 
 [//]: # (Or create an environment with the provided `.yml`:)
 
@@ -32,11 +36,11 @@ pip install omegaconf tensorboard scipy opencv-python matplotlib imageio[ffmpeg]
 
 ## Training
 
-Launch single-GPU training with:
+Launch training on one GPU with:
 ```bash
 python scripts/train.py -d data/example
 ```
-or distributed training with:
+Launch training on one or more GPUs with:
 ```bash
 torchrun --standalone --nnodes=1 --nproc_per_node=YOUR_NUM_GPUS scripts/train.py -d data/green_crane
 ```
@@ -62,7 +66,7 @@ After 100k iterations, which takes around 12 hours on 2 GeForce RTX 3090 GPUs, y
 
 
 ## Acknowledgement
-Some code is borrowed from [NeUS](https://github.com/Totoro97/NeuS), [StyleSDF](https://github.com/royorel/StyleSDF), [GIRAFFE](https://github.com/autonomousvision/giraffe), and [StyleGAN2-ADA](https://github.com/NVlabs/stylegan2-ada-pytorch). Thanks for their amazing works! 
+Some code is borrowed from [NeuS](https://github.com/Totoro97/NeuS), [StyleSDF](https://github.com/royorel/StyleSDF), [GIRAFFE](https://github.com/autonomousvision/giraffe), and [StyleGAN2-ADA](https://github.com/NVlabs/stylegan2-ada-pytorch). Thanks for their amazing works! 
 
 ## Citation
 If you find this work useful, please cite our paper:

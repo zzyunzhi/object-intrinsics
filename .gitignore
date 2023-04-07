@@ -1,5 +1,6 @@
 .idea
-data
+data/*/*.png
 *.DS_Store
 *__pycache__*
 scripts/exp/train.sh
+objint.egg-info
