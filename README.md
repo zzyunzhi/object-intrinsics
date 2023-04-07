@@ -13,16 +13,10 @@ Create a conda environment:
 conda create -n objint python=3.9
 conda activate objint
 ```
-Install pytorch based on your CUDA version:
+Install pytorch based on your CUDA version, and other dependencies:
 ```
 conda install pytorch torchvision pytorch-cuda=11.7 -c pytorch -c nvidia
-```
-Install other dependencies manually:
-```
 pip install omegaconf tensorboard scipy opencv-python matplotlib imageio[ffmpeg]
-```
-Finally, run
-```
 pip install -e .
 ```
 
@@ -36,7 +30,7 @@ pip install -e .
 
 ## Training
 
-Launch training on one GPU with:
+Under the project root directory, launch training on one GPU with:
 ```bash
 python scripts/train.py -d data/example
 ```
@@ -44,8 +38,7 @@ Launch training on one or more GPUs with:
 ```bash
 torchrun --standalone --nnodes=1 --nproc_per_node=YOUR_NUM_GPUS scripts/train.py -d data/green_crane
 ```
-
-Checkpoints and tensorboard files will be saved under `logs/_data_example`. 
+Checkpoints and tensorboard files will be saved under `logs`. 
 
 ## Inference
 ```bash
