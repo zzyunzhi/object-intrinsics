@@ -1,5 +1,4 @@
 from torch.nn.parallel import DistributedDataParallel
-from intrinsics.utils.train import read_render_config
 from torch.utils.data.distributed import DistributedSampler
 import copy
 import torch.distributed as dist
@@ -13,12 +12,39 @@ from tu.train_setup import count_parameters
 import os
 import logging
 from tu.train.setup import get_cfg, get_parser
-from tu.train.utils import overwrite_cfg_from_dotlist
+from tu.train.utils import overwrite_cfg_from_dotlist, resolve_with_omegaconf
 from tu.train_setup import open_tensorboard, set_seed_benchmark
 from tu.utils.config import overwrite_cfg
+from tu.train.setup import load_cfg_from_path
+import numpy as np
 
 
 logger = logging.getLogger(__name__)
+
+
+def read_render_config(dataset_folder, cfg_name):
+    render_config = load_cfg_from_path(cfg_name)
+    # complete fields in render_config
+    if render_config.get('fov') is None:
+        raise NotImplementedError
+    if render_config.get('scene_fov') is None:
+        if isinstance(render_config['img_size_scene'], (tuple, list)):
+            # hack
+            crop_ratio = render_config['img_size'] / render_config['img_size_scene'][0]
+        else:
+            crop_ratio = render_config['img_size'] / render_config['img_size_scene']
+        fov = render_config['fov']
+        fov_scene = float(2 * np.arctan(1 / crop_ratio * np.tan(0.5 * fov * np.pi / 180)) * 180 / np.pi)
+        overwrite_cfg(render_config, 'scene_fov', fov_scene, check_exists=False)
+
+    if render_config.get('cam_dist') is None:
+        # when camera distance is not specified, e.g. with real data,
+        # set the distance such that an object with the identity pose has scale 1
+        cam_dist = float(1 / (np.tan(0.5 * render_config['fov'] * np.pi / 180)))
+        overwrite_cfg(render_config, 'cam_dist', cam_dist, check_exists=False)
+    logger.info(f"found render config:\n{json.dumps(render_config)}")
+    render_config = resolve_with_omegaconf(render_config)
+    return render_config
 
 
 def setup_ddp():
