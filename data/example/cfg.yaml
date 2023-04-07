@@ -1,0 +1,14 @@
+b2w_scene_prior:
+  __target__: src.utils.pose_sampler.Plane
+  kwargs:
+    cam_loc: [0, -1, 0]
+    rot_degree_range_scale: 360
+    rot_roll_degree_range_scale: 20
+    xy_range_scale:
+      - 6
+      - 3.5
+fov: 10
+img_size: 256
+img_size_scene: 1588
+cam_dist: null
+scene_fov: null
