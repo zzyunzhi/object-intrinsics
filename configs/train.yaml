@@ -1,0 +1,175 @@
+_BASE_: null
+_ENV_VARS_:
+  DEBUG: 0  # if setting DEBUG: 1, os.environ['DEBUG'] will be set to '1', and you can insert debugging code like this:
+            # if os.environ.get('DEBUG') == '1':
+            #   import pdb; pdb.set_trace()
+
+resolution: 128
+scene_resolution: null
+dataset: null
+log_dir: null
+
+data_info:
+  fov: null
+  scene_fov: null
+  cam_dist: null
+  pose_prior: null
+  cam_loc: null
+  light_loc: null
+data:
+  __target__: src.datasets.eval_dataset.Dataset
+  kwargs:
+    dataset_folder: ${dataset}
+    resolution: ${resolution}
+model:
+  generator:
+    __target__: src.models.generator.Generator
+    kwargs:
+      anneal_end: 50000
+      pose_prior: ${data_info.pose_prior}
+      z_dim: 64
+      resolution: ${resolution}
+      scene_resolution: ${scene_resolution}
+      color_network:
+        __target__: src.models.fields.ColorNetwork
+        kwargs:
+          D: 8
+          W: 128
+          input_ch: 3
+          input_ch_views: 3
+          style_dim: 64
+      sdf_network:
+        __target__: src.models.fields.ShapeNetwork
+        kwargs:
+          D: 8
+          W: 128
+          checkpoint_path: "./checkpoints/sphere_init.pt"
+          input_ch: 3
+          input_ch_views: 3
+          style_dim: 64
+      deviation_network:
+        __target__: src.third_party.neus.models.fields.SingleVarianceNetwork
+        kwargs:
+          init_val: 0.3
+      light_network:
+        __target__: src.utils.prior.build_directional_light_optimizable
+        kwargs:
+          cam_loc: ${data_info.cam_loc}
+          light_loc: ${data_info.light_loc}
+          ambient_color: 0.33
+          diffuse_color: 0.66
+          specular_color: 0
+          shininess: 10
+      camera:
+        __target__: src.models.camera_network.Camera
+        kwargs:
+          cam_dist: ${data_info.cam_dist}
+          resolution: ${scene_resolution}
+          fov: ${data_info.scene_fov}
+      renderer:
+        __target__: src.third_party.neus.models.renderer.NeuSRenderer
+        kwargs:
+          n_importance: 4
+          n_outside: 0
+          n_samples: 16
+          perturb: 1
+          up_sample_steps: 1
+  discriminator:
+    __target__: src.models.discriminator.ADADiscriminatorView
+    kwargs:
+      aug:
+        __target__: src.third_party.ada.augment.AugmentPipe
+        kwargs:
+          scale: 1
+          xint: 1
+      aug_p: 1
+      img_size: 128
+      in_dim: 3
+      last_bias: false
+      n_feat: 512
+      out_dim: 7
+      out_dim_latent: 0
+      out_dim_position: 6
+  mask_discriminator:
+    __target__: src.models.discriminator.ADADiscriminator
+    kwargs:
+      aug:
+        __target__: src.third_party.ada.augment.AugmentPipe
+        kwargs:
+          scale: 1
+          xint: 1
+      aug_p: 1
+      img_size: 128
+      in_dim: 1
+      last_bias: false
+      n_feat: 512
+      out_dim: 1
+trainer:
+  __target__: src.trainers.gan_pose_trainer.Trainer
+  kwargs:
+    loss_modules:
+      gan:
+        __target__: src.loss.gan.GANLoss
+        kwargs:
+          gan_str: bce
+      reg: src.loss.gan.compute_grad2
+      aux_pose:
+        __target__: src.loss.position.PositionLoss
+        kwargs:
+          loss_str: mse
+    loss_weight:
+      disc_in_gen: 1
+      mask_disc_in_gen: 0.1
+      eikonal: 10
+      reg: 10
+      aux_pose:
+        __target__: src.loss.position.linear_increase
+        kwargs:
+          max_it: 1000
+          max_weight: 1
+training:
+  batch_size: 1
+  checkpoint_dir: null
+  opt_generator:
+    __target__: torch.optim.Adam
+    kwargs:
+      betas:
+      - 0
+      - 0.9
+      lr: 2.0e-05
+  opt_discriminator:
+    __target__: torch.optim.RMSprop
+    kwargs:
+      lr: 0.0001
+  opt_mask_discriminator:
+    __target__: torch.optim.RMSprop
+    kwargs:
+      lr: 0.0001
+  sch_generator:
+    __target__: torch.optim.lr_scheduler.StepLR
+    kwargs:
+      gamma: 1
+      last_epoch: -1
+      step_size: 10000
+  sch_discriminator:
+    __target__: torch.optim.lr_scheduler.StepLR
+    kwargs:
+      gamma: 1
+      last_epoch: -1
+      step_size: 10000
+  sch_mask_discriminator:
+    __target__: torch.optim.lr_scheduler.StepLR
+    kwargs:
+      gamma: 1
+      last_epoch: -1
+      step_size: 10000
+  train_loops_fn:
+    __target__: src.trainers.gan_pose_trainer.train_loops
+    kwargs:
+      eval_every: 1000
+      print_every: 1000
+      visualize_every: 1000
+      checkpoint_every: 10000
+      checkpoint_overwrite: false
+      max_epoch: null
+      max_it: 100000

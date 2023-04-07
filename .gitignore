@@ -1,0 +1,5 @@
+.idea
+data
+*.DS_Store
+*__pycache__*
+scripts/exp/train.sh
