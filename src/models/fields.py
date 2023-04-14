@@ -32,8 +32,6 @@ class ShapeNetwork(nn.Module):
             else:
                 device = 'cuda'
             # logger.info(f'loading to device: {device}')
-            if checkpoint_path.startswith('/viscam/u/yzzhang/projects/intrinsics'):
-                checkpoint_path = os.path.relpath(checkpoint_path, '/viscam/u/yzzhang/projects/intrinsics')
             state_dict = torch.load(checkpoint_path, map_location=device)
             check_cfg_consistency(kwargs, state_dict['cfg']['model']['generator']['kwargs']['sdf_network']['kwargs'],
                                   ignore_keys=['checkpoint_path',])

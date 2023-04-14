@@ -109,15 +109,8 @@ def collect_tensor(tensor: torch.Tensor,
 
 def print_viscam_url(path, verbose=True):
     path = os.path.abspath(path)
-    if path.startswith('/data'):
-        path = path.replace('/data', '/viscam')
-    if os.path.exists(os.path.join(path, 'index.html')):
-        path = os.path.join(path, 'index.html')
-    if os.path.exists('/viscam/'):
-        url = f"{VCV_URL_PREFIX}{path}"
-    else:
-        # local file
-        url = f"file:///{path}"
+    # local file
+    url = f"file:///{path}"
     if verbose:
         logger.info(f"[URL] {url}")
     return url
